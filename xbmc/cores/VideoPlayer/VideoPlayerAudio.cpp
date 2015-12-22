@@ -29,6 +29,9 @@
 #include "cores/AudioEngine/AEFactory.h"
 #include "cores/AudioEngine/Utils/AEUtil.h"
 #include "cores/DataCacheCore.h"
+#ifdef TARGET_RASPBERRY_PI
+#include "linux/RBP.h"
+#endif
 
 #include <sstream>
 #include <iomanip>
@@ -121,11 +124,22 @@ CVideoPlayerAudio::~CVideoPlayerAudio()
   // CloseStream(true);
 }
 
+bool CVideoPlayerAudio::AllowDTSHDDecode()
+{
+#ifdef TARGET_RASPBERRY_PI
+  if (g_RBP.RasberryPiVersion() == 1)
+    return false;
+#endif
+  return true;
+}
+
 bool CVideoPlayerAudio::OpenStream(CDVDStreamInfo &hints)
 {
   CLog::Log(LOGNOTICE, "Finding audio codec for: %i", hints.codec);
   bool allowpassthrough = !CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOPLAYER_USEDISPLAYASCLOCK);
-  CDVDAudioCodec* codec = CDVDFactoryCodec::CreateAudioCodec(hints, allowpassthrough);
+  if (hints.realtime)
+    allowpassthrough = false;
+  CDVDAudioCodec* codec = CDVDFactoryCodec::CreateAudioCodec(hints, allowpassthrough, AllowDTSHDDecode());
   if(!codec)
   {
     CLog::Log(LOGERROR, "Unsupported audio codec");
@@ -138,7 +152,6 @@ bool CVideoPlayerAudio::OpenStream(CDVDStreamInfo &hints)
   {
     OpenStream(hints, codec);
     m_messageQueue.Init();
-    m_syncState = IDVDStreamPlayer::SYNC_STARTING;
     CLog::Log(LOGNOTICE, "Creating audio thread");
     Create();
   }
@@ -174,6 +187,9 @@ void CVideoPlayerAudio::OpenStream(CDVDStreamInfo &hints, CDVDAudioCodec* codec)
   m_setsynctype = SYNC_DISCON;
   if (CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOPLAYER_USEDISPLAYASCLOCK))
     m_setsynctype = SYNC_RESAMPLE;
+  else if (hints.realtime)
+    m_setsynctype = SYNC_RESAMPLE;
+
   m_prevsynctype = -1;
 
   m_prevskipped = false;
@@ -182,6 +198,7 @@ void CVideoPlayerAudio::OpenStream(CDVDStreamInfo &hints, CDVDAudioCodec* codec)
   m_maxspeedadjust = 5.0;
 
   g_dataCacheCore.SignalAudioInfoChange();
+  m_syncState = IDVDStreamPlayer::SYNC_STARTING;
 }
 
 void CVideoPlayerAudio::CloseStream(bool bWaitForBuffers)
@@ -189,7 +206,8 @@ void CVideoPlayerAudio::CloseStream(bool bWaitForBuffers)
   bool bWait = bWaitForBuffers && m_speed > 0 && !CAEFactory::IsSuspended();
 
   // wait until buffers are empty
-  if (bWait) m_messageQueue.WaitUntilEmpty();
+  if (bWait)
+    m_messageQueue.WaitUntilEmpty();
 
   // send abort message to the audio queue
   m_messageQueue.Abort();
@@ -272,7 +290,7 @@ int CVideoPlayerAudio::DecodeFrame(DVDAudioFrame &audioframe)
       if (audioframe.pts == DVD_NOPTS_VALUE)
         audioframe.pts = m_audioClock;
 
-      if (audioframe.format.m_sampleRate && m_streaminfo.samplerate != audioframe.format.m_sampleRate)
+      if (audioframe.format.m_sampleRate && m_streaminfo.samplerate != (int) audioframe.format.m_sampleRate)
       {
         // The sample rate has changed or we just got it for the first time
         // for this stream. See if we should enable/disable passthrough due
@@ -653,7 +671,9 @@ bool CVideoPlayerAudio::SwitchCodecIfNeeded()
 {
   CLog::Log(LOGDEBUG, "CVideoPlayerAudio: Sample rate changed, checking for passthrough");
   bool allowpassthrough = !CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOPLAYER_USEDISPLAYASCLOCK);
-  CDVDAudioCodec *codec = CDVDFactoryCodec::CreateAudioCodec(m_streaminfo, allowpassthrough);
+  if (m_streaminfo.realtime)
+    allowpassthrough = false;
+  CDVDAudioCodec *codec = CDVDFactoryCodec::CreateAudioCodec(m_streaminfo, allowpassthrough, AllowDTSHDDecode());
   if (!codec || codec->NeedPassthrough() == m_pAudioCodec->NeedPassthrough()) {
     // passthrough state has not changed
     delete codec;

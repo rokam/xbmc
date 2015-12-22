@@ -180,11 +180,11 @@
 #endif
 
 #ifdef TARGET_DARWIN_OSX
-#include "osx/CocoaInterface.h"
-#include "osx/XBMCHelper.h"
+#include "platform/darwin/osx/CocoaInterface.h"
+#include "platform/darwin/osx/XBMCHelper.h"
 #endif
 #ifdef TARGET_DARWIN
-#include "osx/DarwinUtils.h"
+#include "platform/darwin/DarwinUtils.h"
 #endif
 
 #ifdef HAS_DVD_DRIVE
@@ -204,9 +204,9 @@
 #endif
 
 #if defined(TARGET_ANDROID)
-#include "android/activity/XBMCApp.h"
-#include "android/activity/AndroidFeatures.h"
-#include "android/jni/Build.h"
+#include "platform/android/activity/XBMCApp.h"
+#include "platform/android/activity/AndroidFeatures.h"
+#include "platform/android/jni/Build.h"
 #endif
 
 #ifdef TARGET_WINDOWS
@@ -256,6 +256,8 @@ using KODI::MESSAGING::HELPERS::DialogResponse;
 //extern IDirectSoundRenderer* m_pAudioDecoder;
 CApplication::CApplication(void)
   : m_pPlayer(new CApplicationPlayer)
+  , m_saveSkinOnUnloading(true)
+  , m_autoExecScriptExecuted(false)
   , m_itemCurrentFile(new CFileItem)
   , m_stackFileItemToUpdate(new CFileItem)
   , m_progressTrackingVideoResumeBookmark(*new CBookmark)
@@ -278,7 +280,6 @@ CApplication::CApplication(void)
   m_bPlaybackStarting = false;
   m_ePlayState = PLAY_STATE_NONE;
   m_skinReverting = false;
-  m_loggingIn = false;
 
 #ifdef HAS_GLX
   XInitThreads();
@@ -1205,7 +1206,7 @@ bool CApplication::Initialize()
   if (!CProfilesManager::GetInstance().UsingLoginScreen())
   {
     UpdateLibraries();
-    SetLoggingIn(true);
+    SetLoggingIn(false);
   }
 
   m_slowTimer.StartZero();
@@ -1736,8 +1737,10 @@ void CApplication::UnloadSkin(bool forReload /* = false */)
 {
   CLog::Log(LOGINFO, "Unloading old skin %s...", forReload ? "for reload " : "");
 
-  if (g_SkinInfo != nullptr)
+  if (g_SkinInfo != nullptr && m_saveSkinOnUnloading)
     g_SkinInfo->SaveSettings();
+  else if (!m_saveSkinOnUnloading)
+    m_saveSkinOnUnloading = true;
 
   g_audioManager.Enable(false);
 
@@ -4495,9 +4498,9 @@ void CApplication::Process()
   // (this can only be done after g_windowManager.Render())
   CApplicationMessenger::GetInstance().ProcessWindowMessages();
 
-  if (m_loggingIn)
+  if (m_autoExecScriptExecuted)
   {
-    m_loggingIn = false;
+    m_autoExecScriptExecuted = false;
 
     // autoexec.py - profile
     std::string strAutoExecPy = CSpecialProtocol::TranslatePath("special://profile/autoexec.py");
@@ -5227,6 +5230,18 @@ bool CApplication::LoadLanguage(bool reload)
   g_langInfo.SetSubtitleLanguage(CSettings::GetInstance().GetString(CSettings::SETTING_LOCALE_SUBTITLELANGUAGE));
 
   return true;
+}
+
+void CApplication::SetLoggingIn(bool switchingProfiles)
+{
+  // don't save skin settings on unloading when logging into another profile
+  // because in that case we have already loaded the new profile and
+  // would therefore write the previous skin's settings into the new profile
+  // instead of into the previous one
+  m_saveSkinOnUnloading = !switchingProfiles;
+
+  // make sure that the autoexec.py script is executed after logging in
+  m_autoExecScriptExecuted = true;
 }
 
 void CApplication::CloseNetworkShares()

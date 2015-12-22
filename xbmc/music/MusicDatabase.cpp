@@ -534,7 +534,7 @@ bool CMusicDatabase::AddAlbum(CAlbum& album)
   return true;
 }
 
-bool CMusicDatabase::UpdateAlbum(CAlbum& album)
+bool CMusicDatabase::UpdateAlbum(CAlbum& album, bool OverrideTagData /* = true*/)
 {
   BeginTransaction();
 
@@ -549,56 +549,60 @@ bool CMusicDatabase::UpdateAlbum(CAlbum& album)
               album.strLabel, album.strType,
               album.fRating, album.iUserrating, album.iVotes, album.iYear, album.bCompilation, album.releaseType);
 
-  // Add the album artists
-  DeleteAlbumArtistsByAlbum(album.idAlbum);
-  for (VECARTISTCREDITS::iterator artistCredit = album.artistCredits.begin(); artistCredit != album.artistCredits.end(); ++artistCredit)
+  if (OverrideTagData)
   {
-    artistCredit->idArtist = AddArtist(artistCredit->GetArtist(),
-                                       artistCredit->GetMusicBrainzArtistID());
-    AddAlbumArtist(artistCredit->idArtist,
-                   album.idAlbum,
-                   artistCredit->GetArtist(),
-                   artistCredit->GetJoinPhrase(),
-                   artistCredit == album.artistCredits.begin() ? false : true,
-                   std::distance(album.artistCredits.begin(), artistCredit));
-  }
-
-  for (VECSONGS::iterator song = album.songs.begin(); song != album.songs.end(); ++song)
-  {
-    UpdateSong(song->idSong,
-               song->strTitle,
-               song->strMusicBrainzTrackID,
-               song->strFileName,
-               song->strComment,
-               song->strMood,
-               song->strThumb,
-               song->GetArtistString(),
-               song->genre,
-               song->iTrack,
-               song->iDuration,
-               song->iYear,
-               song->iTimesPlayed,
-               song->iStartOffset,
-               song->iEndOffset,
-               song->lastPlayed,
-               song->rating,
-               song->userrating,
-               song->votes);
-    DeleteSongArtistsBySong(song->idSong);
-    for (VECARTISTCREDITS::iterator artistCredit = song->artistCredits.begin(); artistCredit != song->artistCredits.end(); ++artistCredit)
+    // Add the album artists
+    DeleteAlbumArtistsByAlbum(album.idAlbum);
+    for (VECARTISTCREDITS::iterator artistCredit = album.artistCredits.begin(); artistCredit != album.artistCredits.end(); ++artistCredit)
     {
       artistCredit->idArtist = AddArtist(artistCredit->GetArtist(),
-                                         artistCredit->GetMusicBrainzArtistID());
-      AddSongArtist(artistCredit->idArtist,
-                    song->idSong,
-                    artistCredit->GetArtist(),
-                    artistCredit->GetJoinPhrase(),
-                    artistCredit == song->artistCredits.begin() ? false : true,
-                    std::distance(song->artistCredits.begin(), artistCredit));
+        artistCredit->GetMusicBrainzArtistID());
+      AddAlbumArtist(artistCredit->idArtist,
+        album.idAlbum,
+        artistCredit->GetArtist(),
+        artistCredit->GetJoinPhrase(),
+        artistCredit == album.artistCredits.begin() ? false : true,
+        std::distance(album.artistCredits.begin(), artistCredit));
     }
 
-    SaveCuesheet(song->strFileName, song->strCueSheet);
+    for (VECSONGS::iterator song = album.songs.begin(); song != album.songs.end(); ++song)
+    {
+      UpdateSong(song->idSong,
+        song->strTitle,
+        song->strMusicBrainzTrackID,
+        song->strFileName,
+        song->strComment,
+        song->strMood,
+        song->strThumb,
+        song->GetArtistString(),
+        song->genre,
+        song->iTrack,
+        song->iDuration,
+        song->iYear,
+        song->iTimesPlayed,
+        song->iStartOffset,
+        song->iEndOffset,
+        song->lastPlayed,
+        song->rating,
+        song->userrating,
+        song->votes);
+      DeleteSongArtistsBySong(song->idSong);
+      for (VECARTISTCREDITS::iterator artistCredit = song->artistCredits.begin(); artistCredit != song->artistCredits.end(); ++artistCredit)
+      {
+        artistCredit->idArtist = AddArtist(artistCredit->GetArtist(),
+          artistCredit->GetMusicBrainzArtistID());
+        AddSongArtist(artistCredit->idArtist,
+          song->idSong,
+          artistCredit->GetArtist(),
+          artistCredit->GetJoinPhrase(),
+          artistCredit == song->artistCredits.begin() ? false : true,
+          std::distance(song->artistCredits.begin(), artistCredit));
+      }
+
+      SaveCuesheet(song->strFileName, song->strCueSheet);
+    }
   }
+
   for (VECSONGS::const_iterator infoSong = album.infoSongs.begin(); infoSong != album.infoSongs.end(); ++infoSong)
     AddAlbumInfoSong(album.idAlbum, *infoSong);
 
@@ -2987,7 +2991,7 @@ bool CMusicDatabase::LookupCDDBInfo(bool bRequery/*=false*/)
         pDlgSelect->Open();
 
         // Has the user selected a match...
-        int iSelectedCD = pDlgSelect->GetSelectedLabel();
+        int iSelectedCD = pDlgSelect->GetSelectedItem();
         if (iSelectedCD >= 0)
         {
           // ...query cddb for the inexact match
@@ -3070,14 +3074,14 @@ void CMusicDatabase::DeleteCDDBInfo()
     pDlg->Open();
 
     // and wait till user selects one
-    int iSelectedAlbum = pDlg->GetSelectedLabel();
+    int iSelectedAlbum = pDlg->GetSelectedItem();
     if (iSelectedAlbum < 0)
     {
       mapCDDBIds.erase(mapCDDBIds.begin(), mapCDDBIds.end());
       return ;
     }
 
-    std::string strSelectedAlbum = pDlg->GetSelectedLabelText();
+    std::string strSelectedAlbum = pDlg->GetSelectedFileItem()->GetLabel();
     std::map<ULONG, std::string>::iterator it;
     for (it = mapCDDBIds.begin();it != mapCDDBIds.end();++it)
     {
@@ -3401,7 +3405,10 @@ bool CMusicDatabase::GetArtistsNav(const std::string& strBaseDir, CFileItemList&
     else if (idSong > 0)
       musicUrl.AddOption("songid", idSong);
 
-    musicUrl.AddOption("albumartistsonly", albumArtistsOnly);
+    // Override albumArtistsOnly parameter (usually externally set to SETTING_MUSICLIBRARY_SHOWCOMPILATIONARTISTS)
+    // when local option already present in muscic URL thus allowing it to be an option in custom nodes
+    if (!musicUrl.HasOption("albumartistsonly"))
+      musicUrl.AddOption("albumartistsonly", albumArtistsOnly);
 
     bool result = GetArtistsByWhere(musicUrl.ToString(), filter, items, sortDescription, countOnly);
     CLog::Log(LOGDEBUG,"Time to retrieve artists from dataset = %i", XbmcThreads::SystemClockMillis() - time);
@@ -4400,11 +4407,15 @@ void CMusicDatabase::UpdateTables(int version)
      m_pDS->exec("ALTER TABLE album ADD iVotes INTEGER NOT NULL DEFAULT 0");
      m_pDS->exec("ALTER TABLE song ADD votes INTEGER NOT NULL DEFAULT 0");
    }
+   if (version < 58)
+   {
+     m_pDS->exec("UPDATE album SET fRating = fRating * 2");
+   }
 }
 
 int CMusicDatabase::GetSchemaVersion() const
 {
-  return 57;
+  return 58;
 }
 
 unsigned int CMusicDatabase::GetSongIDs(const Filter &filter, std::vector<std::pair<int,int> > &songIDs)

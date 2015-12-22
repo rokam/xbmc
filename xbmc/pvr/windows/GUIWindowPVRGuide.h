@@ -40,9 +40,12 @@ namespace PVR
     bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
     void ResetObservers(void);
     void UnregisterObservers(void);
+    bool Update(const std::string &strDirectory, bool updateFilterPath = true);
+    void UpdateButtons(void);
 
   protected:
     void UpdateSelectedItemPath();
+    virtual std::string GetDirectoryPath(void) override { return ""; }
     virtual bool GetDirectory(const std::string &strDirectory, CFileItemList &items);
 
   private:

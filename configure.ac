@@ -919,9 +919,6 @@ AC_CHECK_TYPES([char16_t, char32_t])
 AC_CHECK_SIZEOF([wchar_t])
 AC_LANG_POP([C++])
 
-# Add top source directory for all builds so we can use config.h
-INCLUDES="-I\$(abs_top_srcdir) $INCLUDES" 
-
 # Check inotify availability
 AC_CHECK_HEADER([sys/inotify.h], AC_DEFINE([HAVE_INOTIFY],[1],[Define if we have inotify]),)
 
@@ -2142,7 +2139,7 @@ else
 fi
 
 if test "x$use_pulse" != "xno"; then
-  XBMC_STANDALONE_SH_PULSE=tools/Linux/${APP_NAME_LC}-standalone.sh.pulse
+  XBMC_STANDALONE_SH_PULSE=tools/Linux/kodi-standalone.sh.pulse
   final_message="$final_message\n  PulseAudio:\tYes"
 else
   XBMC_STANDALONE_SH_PULSE=/dev/null
@@ -2381,7 +2378,6 @@ OUTPUT_FILES="Makefile \
     xbmc/cores/playercorefactory/Makefile \
     xbmc/messaging/Makefile \
     xbmc/messaging/helpers/Makefile \
-    xbmc/osx/Makefile \
     xbmc/guilib/Makefile \
     xbmc/input/linux/Makefile \
     xbmc/interfaces/Makefile \
@@ -2404,26 +2400,27 @@ OUTPUT_FILES="Makefile \
     lib/addons/library.xbmc.codec/Makefile \
     lib/addons/library.kodi.guilib/Makefile \
     lib/addons/library.xbmc.pvr/Makefile \
-    tools/Linux/${APP_NAME_LC}.sh \
-    tools/Linux/${APP_NAME_LC}-standalone.sh \
-    tools/Linux/${APP_NAME_LC}-xsession.desktop \
+    tools/Linux/kodi.sh \
+    tools/Linux/kodi-standalone.sh \
+    tools/Linux/kodi-xsession.desktop \
     tools/EventClients/Makefile \
     tools/EventClients/Clients/OSXRemote/Makefile \
     xbmc/peripherals/bus/Makefile \
     xbmc/peripherals/devices/Makefile \
-    xbmc/android/activity/Makefile \
-    xbmc/android/loader/Makefile \
-    xbmc/android/jni/Makefile \
+    xbmc/platform/posix/Makefile \
+    xbmc/platform/darwin/osx/Makefile \
+    xbmc/platform/android/activity/Makefile \
+    xbmc/platform/android/loader/Makefile \
+    xbmc/platform/android/jni/Makefile \
     xbmc/utils/Makefile \
-    xbmc/main/Makefile \
-    xbmc/main/posix/Makefile \
+    xbmc/platform/Makefile \
     tools/darwin/Configurations/App.xcconfig \
     tools/darwin/Configurations/Common.xcconfig \
     tools/darwin/packaging/ios/mkdeb-ios.sh \
     tools/darwin/packaging/osx/mkdmg-osx.sh \
     tools/darwin/packaging/migrate_to_kodi_ios.sh \
-    xbmc/osx/Info.plist \
-    xbmc/osx/ios/XBMCIOS-Info.plist \
+    xbmc/platform/darwin/osx/Info.plist \
+    xbmc/platform/darwin/ios/IOS-Info.plist \
     project/cmake/kodi-config.cmake \
     project/cmake/xbmc-config.cmake \
     tools/android/packaging/xbmc/AndroidManifest.xml \

@@ -343,9 +343,11 @@ void CGUIDialogSongInfo::OnSetUserrating()
     for (int i = 1; i <= 10; i++)
       dialog->Add(StringUtils::Format("%s: %i", g_localizeStrings.Get(563).c_str(), i));
 
+    dialog->SetSelected(m_song->GetMusicInfoTag()->GetUserrating());
+
     dialog->Open();
 
-    int iItem = dialog->GetSelectedLabel();
+    int iItem = dialog->GetSelectedItem();
     if (iItem < 0)
       return;
 

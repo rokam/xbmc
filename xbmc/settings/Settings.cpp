@@ -45,10 +45,10 @@
 #include "network/upnp/UPnPSettings.h"
 #include "network/WakeOnAccess.h"
 #if defined(TARGET_DARWIN_OSX)
-#include "osx/XBMCHelper.h"
+#include "platform/darwin/osx/XBMCHelper.h"
 #endif // defined(TARGET_DARWIN_OSX)
 #if defined(TARGET_DARWIN)
-#include "osx/DarwinUtils.h"
+#include "platform/darwin/DarwinUtils.h"
 #endif
 #if defined(TARGET_DARWIN_IOS)
 #include "SettingAddon.h"
@@ -258,7 +258,7 @@ const std::string CSettings::SETTING_PVRPARENTAL_ENABLED = "pvrparental.enabled"
 const std::string CSettings::SETTING_PVRPARENTAL_PIN = "pvrparental.pin";
 const std::string CSettings::SETTING_PVRPARENTAL_DURATION = "pvrparental.duration";
 const std::string CSettings::SETTING_PVRCLIENT_MENUHOOK = "pvrclient.menuhook";
-const std::string CSettings::SETTING_PVRTIMERS_TIMERTYPEFILTER = "pvrtimers.timertypefilter";
+const std::string CSettings::SETTING_PVRTIMERS_HIDEDISABLEDTIMERS = "pvrtimers.hidedisabledtimers";
 const std::string CSettings::SETTING_MUSICLIBRARY_SHOWCOMPILATIONARTISTS = "musiclibrary.showcompilationartists";
 const std::string CSettings::SETTING_MUSICLIBRARY_DOWNLOADINFO = "musiclibrary.downloadinfo";
 const std::string CSettings::SETTING_MUSICLIBRARY_ALBUMSSCRAPER = "musiclibrary.albumsscraper";
@@ -364,7 +364,6 @@ const std::string CSettings::SETTING_AUDIOOUTPUT_EAC3PASSTHROUGH = "audiooutput.
 const std::string CSettings::SETTING_AUDIOOUTPUT_DTSPASSTHROUGH = "audiooutput.dtspassthrough";
 const std::string CSettings::SETTING_AUDIOOUTPUT_TRUEHDPASSTHROUGH = "audiooutput.truehdpassthrough";
 const std::string CSettings::SETTING_AUDIOOUTPUT_DTSHDPASSTHROUGH = "audiooutput.dtshdpassthrough";
-const std::string CSettings::SETTING_AUDIOOUTPUT_SUPPORTSDTSHDCPUDECODING = "audiooutput.supportdtshdcpudecoding";
 const std::string CSettings::SETTING_INPUT_PERIPHERALS = "input.peripherals";
 const std::string CSettings::SETTING_INPUT_ENABLEMOUSE = "input.enablemouse";
 const std::string CSettings::SETTING_INPUT_ENABLEJOYSTICK = "input.enablejoystick";

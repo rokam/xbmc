@@ -807,6 +807,13 @@ RESOLUTION CApplicationPlayer::GetRenderResolution()
     return RES_INVALID;
 }
 
+void CApplicationPlayer::TriggerUpdateResolution()
+{
+  std::shared_ptr<IPlayer> player = GetInternal();
+  if (player)
+    player->TriggerUpdateResolution();
+}
+
 bool CApplicationPlayer::IsRenderingVideo()
 {
   std::shared_ptr<IPlayer> player = GetInternal();
@@ -870,27 +877,36 @@ bool CApplicationPlayer::Supports(ERENDERFEATURE feature)
     return false;
 }
 
-CRenderCapture* CApplicationPlayer::RenderCaptureAlloc()
+unsigned int CApplicationPlayer::RenderCaptureAlloc()
 {
   std::shared_ptr<IPlayer> player = GetInternal();
   if (player)
     return player->RenderCaptureAlloc();
   else
-    return NULL;
+    return 0;
 }
 
-void CApplicationPlayer::RenderCapture(CRenderCapture* capture, unsigned int width, unsigned int height, int flags)
+void CApplicationPlayer::RenderCapture(unsigned int captureId, unsigned int width, unsigned int height, int flags)
 {
   std::shared_ptr<IPlayer> player = GetInternal();
   if (player)
-    player->RenderCapture(capture, width, height, flags);
+    player->RenderCapture(captureId, width, height, flags);
 }
 
-void CApplicationPlayer::RenderCaptureRelease(CRenderCapture* capture)
+void CApplicationPlayer::RenderCaptureRelease(unsigned int captureId)
 {
   std::shared_ptr<IPlayer> player = GetInternal();
   if (player)
-    player->RenderCaptureRelease(capture);
+    player->RenderCaptureRelease(captureId);
+}
+
+bool CApplicationPlayer::RenderCaptureGetPixels(unsigned int captureId, unsigned int millis, uint8_t *buffer, unsigned int size)
+{
+  std::shared_ptr<IPlayer> player = GetInternal();
+  if (player)
+    return player->RenderCaptureGetPixels(captureId, millis, buffer, size);
+  else
+    return false;
 }
 
 std::string CApplicationPlayer::GetRenderVSyncState()

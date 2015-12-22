@@ -129,23 +129,18 @@ bool CGUIDialogContentSettings::OnMessage(CGUIMessage &message)
 
           dialog->Open();
           // Selected item has not changes - in case of cancel or the user selecting the same item
-          if (dialog->GetSelectedLabel() == iSelected)
+          if (!dialog->IsConfirmed() || dialog->GetSelectedItem() == iSelected)
             return true;
-          for (const auto &label : labels)
-          {
-            if (dialog->GetSelectedLabelText() == label.first)
-            {
-              m_content = static_cast<CONTENT_TYPE>(label.second);
-              break;
-            }
-          }
+
+          auto selected = labels.at(dialog->GetSelectedItem());
+          m_content = static_cast<CONTENT_TYPE>(selected.second);
 
           AddonPtr scraperAddon;
           CAddonMgr::GetInstance().GetDefault(ADDON::ScraperTypeFromContent(m_content), scraperAddon);
           m_scraper = std::dynamic_pointer_cast<CScraper>(scraperAddon);
 
           SetupView();
-          SET_CONTROL_LABEL2(CONTROL_CONTENT_TYPE_BUTTON, dialog->GetSelectedLabelText());
+          SET_CONTROL_LABEL2(CONTROL_CONTENT_TYPE_BUTTON, selected.first);
           SET_CONTROL_FOCUS(CONTROL_CONTENT_TYPE_BUTTON, 0);
         }
       }
@@ -249,7 +244,7 @@ bool CGUIDialogContentSettings::Show(ADDON::ScraperPtr& scraper, VIDEO::SScanSet
     dialog->SetContent(content != CONTENT_NONE ? content : scraper->Content());
     dialog->SetScraper(scraper);
     // toast selected but disabled scrapers
-    if (!scraper->Enabled())
+    if (CAddonMgr::GetInstance().IsAddonDisabled(scraper->ID()))
       CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Error, g_localizeStrings.Get(24024), scraper->Name(), 2000, true);
   }
 
@@ -382,7 +377,7 @@ void CGUIDialogContentSettings::SetupView()
   else
   {
     SET_CONTROL_VISIBLE(CONTROL_SCRAPER_LIST_BUTTON);
-    if (m_scraper != NULL && m_scraper->Enabled())
+    if (m_scraper != NULL && !CAddonMgr::GetInstance().IsAddonDisabled(m_scraper->ID()))
     {
       SET_CONTROL_LABEL2(CONTROL_SCRAPER_LIST_BUTTON, m_scraper->Name());
 

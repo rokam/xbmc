@@ -412,8 +412,10 @@ bool CPVRTimers::GetRootDirectory(const CPVRTimersPath &path, CFileItemList &ite
   item->SetSpecialSort(SortSpecialOnTop);
   items.Add(item);
 
-  bool bRadio   = path.IsRadio();
-  bool bGrouped = path.IsGrouped();
+  bool bRadio = path.IsRadio();
+  bool bRules = path.IsRules();
+
+  bool bHideDisabled = CSettings::GetInstance().GetBool(CSettings::SETTING_PVRTIMERS_HIDEDISABLEDTIMERS);
 
   CSingleLock lock(m_critSection);
   for (const auto &tagsEntry : m_tags)
@@ -421,7 +423,8 @@ bool CPVRTimers::GetRootDirectory(const CPVRTimersPath &path, CFileItemList &ite
     for (const auto &timer : *tagsEntry.second)
     {
       if ((bRadio == timer->m_bIsRadio) &&
-          (!bGrouped || (timer->m_iParentClientIndex == PVR_TIMER_NO_PARENT)))
+          (bRules == timer->IsRepeating()) &&
+          (!bHideDisabled || (timer->m_state != PVR_TIMER_STATE_DISABLED)))
       {
         item.reset(new CFileItem(timer));
         std::string strItemPath(
@@ -440,6 +443,8 @@ bool CPVRTimers::GetSubDirectory(const CPVRTimersPath &path, CFileItemList &item
   unsigned int iParentId = path.GetParentId();
   int          iClientId = path.GetClientId();
 
+  bool bHideDisabled = CSettings::GetInstance().GetBool(CSettings::SETTING_PVRTIMERS_HIDEDISABLEDTIMERS);
+
   CFileItemPtr item;
 
   CSingleLock lock(m_critSection);
@@ -450,7 +455,8 @@ bool CPVRTimers::GetSubDirectory(const CPVRTimersPath &path, CFileItemList &item
       if ((timer->m_bIsRadio == bRadio) &&
           (timer->m_iParentClientIndex != PVR_TIMER_NO_PARENT) &&
           (timer->m_iClientId == iClientId) &&
-          (timer->m_iParentClientIndex == iParentId))
+          (timer->m_iParentClientIndex == iParentId) &&
+          (!bHideDisabled || (timer->m_state != PVR_TIMER_STATE_DISABLED)))
       {
         item.reset(new CFileItem(timer));
         std::string strItemPath(
@@ -698,11 +704,12 @@ CFileItemPtr CPVRTimers::GetTimerForEpgTag(const CFileItem *item) const
       {
         CPVRTimerInfoTagPtr timer = *timerIt;
 
-        if (timer->GetEpgInfoTag() == epgTag || 
-            (timer->m_iClientChannelUid == channel->UniqueID() &&
-            timer->m_bIsRadio == channel->IsRadio() &&
-            timer->StartAsUTC() <= epgTag->StartAsUTC() &&
-            timer->EndAsUTC() >= epgTag->EndAsUTC()))
+        if (!timer->IsRepeating() &&
+            (timer->GetEpgInfoTag() == epgTag ||
+             (timer->m_iClientChannelUid == channel->UniqueID() &&
+             timer->m_bIsRadio == channel->IsRadio() &&
+             timer->StartAsUTC() <= epgTag->StartAsUTC() &&
+             timer->EndAsUTC() >= epgTag->EndAsUTC())))
         {
           CFileItemPtr fileItem(new CFileItem(timer));
           return fileItem;
@@ -858,8 +865,8 @@ CPVRTimersPath::CPVRTimersPath(const std::string &strPath, int iClientId, unsign
   {
     /* set/replace client and parent id. */
     m_path = StringUtils::Format("pvr://timers/%s/%s/%d/%d",
-                                 m_bRadio   ? "radio"   : "tv",
-                                 m_bGrouped ? "grouped" : "all",
+                                 m_bRadio      ? "radio" : "tv",
+                                 m_bTimerRules ? "rules" : "timers",
                                  iClientId,
                                  iParentId);
     m_iClientId = iClientId;
@@ -868,13 +875,13 @@ CPVRTimersPath::CPVRTimersPath(const std::string &strPath, int iClientId, unsign
   }
 }
 
-CPVRTimersPath::CPVRTimersPath(bool bRadio, bool bGrouped) :
+CPVRTimersPath::CPVRTimersPath(bool bRadio, bool bTimerRules) :
   m_path(StringUtils::Format(
-    "pvr://timers/%s/%s", bRadio ? "radio" : "tv", bGrouped ? "grouped" : "all")),
+    "pvr://timers/%s/%s", bRadio ? "radio" : "tv", bTimerRules ? "rules" : "timers")),
   m_bValid(true),
   m_bRoot(true),
   m_bRadio(bRadio),
-  m_bGrouped(bGrouped),
+  m_bTimerRules(bTimerRules),
   m_iClientId(-1),
   m_iParentId(0)
 {
@@ -891,10 +898,10 @@ bool CPVRTimersPath::Init(const std::string &strPath)
   m_bValid   = (((segments.size() == 4) || (segments.size() == 6)) &&
                 (segments.at(1) == "timers") &&
                 ((segments.at(2) == "radio") || (segments.at(2) == "tv"))&&
-                ((segments.at(3) == "grouped") || (segments.at(3) == "all")));
+                ((segments.at(3) == "rules") || (segments.at(3) == "timers")));
   m_bRoot    = (m_bValid && (segments.size() == 4));
   m_bRadio   = (m_bValid && (segments.at(2) == "radio"));
-  m_bGrouped = (m_bValid && (segments.at(3) == "grouped"));
+  m_bTimerRules = (m_bValid && (segments.at(3) == "rules"));
 
   if (!m_bValid || m_bRoot)
   {

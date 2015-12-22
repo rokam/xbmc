@@ -462,7 +462,7 @@ void CGUIDialogVideoInfo::OnSearch(std::string& strSearch)
 
     pDlgSelect->Open();
 
-    int iItem = pDlgSelect->GetSelectedLabel();
+    int iItem = pDlgSelect->GetSelectedItem();
     if (iItem < 0)
       return;
 
@@ -643,6 +643,7 @@ std::string CGUIDialogVideoInfo::ChooseArtType(const CFileItem &videoItem, std::
       item->SetLabel(g_localizeStrings.Get(21371));
     else
       item->SetLabel(type);
+    item->SetProperty("type", type);
     if (videoItem.HasArt(type))
       item->SetArt("thumb", videoItem.GetArt(type));
     items.Add(item);
@@ -661,7 +662,7 @@ std::string CGUIDialogVideoInfo::ChooseArtType(const CFileItem &videoItem, std::
     return strArtworkName;
   }
 
-  return dialog->GetSelectedItem()->GetLabel();
+  return dialog->GetSelectedFileItem()->GetProperty("type").asString();
 }
 
 void CGUIDialogVideoInfo::OnGetArt()
@@ -884,9 +885,11 @@ void CGUIDialogVideoInfo::OnSetUserrating()
     for (int i = 1; i <= 10; i++)
       dialog->Add(StringUtils::Format("%s: %i", g_localizeStrings.Get(563).c_str(), i));
 
+    dialog->SetSelected(m_movieItem->GetVideoInfoTag()->m_iUserRating);
+
     dialog->Open();
 
-    int iItem = dialog->GetSelectedLabel();
+    int iItem = dialog->GetSelectedItem();
     if (iItem < 0)
       return;
 
@@ -1516,7 +1519,7 @@ bool CGUIDialogVideoInfo::GetSetForMovie(const CFileItem *movieItem, CFileItemPt
   }
   else if (dialog->IsConfirmed())
   {
-    selectedSet = dialog->GetSelectedItem();
+    selectedSet = dialog->GetSelectedFileItem();
     return (selectedSet != NULL);
   }
   else
@@ -1944,7 +1947,7 @@ bool CGUIDialogVideoInfo::LinkMovieToTvShow(const CFileItemPtr &item, bool bRemo
     pDialog->SetItems(list);
     pDialog->SetHeading(CVariant{20356});
     pDialog->Open();
-    iSelectedLabel = pDialog->GetSelectedLabel();
+    iSelectedLabel = pDialog->GetSelectedItem();
   }
 
   if (iSelectedLabel > -1 && iSelectedLabel < list.Size())

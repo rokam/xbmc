@@ -47,7 +47,7 @@
 #endif
 #if defined(TARGET_ANDROID)
 #include "Video/DVDVideoCodecAndroidMediaCodec.h"
-#include "android/activity/AndroidFeatures.h"
+#include "platform/android/activity/AndroidFeatures.h"
 #endif
 #include "Audio/DVDAudioCodecFFmpeg.h"
 #include "Audio/DVDAudioCodecPassthrough.h"
@@ -130,7 +130,7 @@ CDVDOverlayCodec* CDVDFactoryCodec::OpenCodec(CDVDOverlayCodec* pCodec, CDVDStre
 }
 
 
-CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, const CRenderInfo &info)
+CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, const CRenderInfo &info, IVPClockCallback* clock)
 {
   CDVDVideoCodec* pCodec = NULL;
   CDVDCodecOptions options;
@@ -215,7 +215,7 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, const C
         if (hint.width <= 800)
           break;
       default:
-        if ( (pCodec = OpenCodec(new CDVDVideoCodecAmlogic(), hint, options)) ) return pCodec;
+        if ( (pCodec = OpenCodec(new CDVDVideoCodecAmlogic(clock), hint, options)) ) return pCodec;
     }
   }
 #endif
@@ -264,8 +264,6 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, const C
       case AV_CODEC_ID_MPEG4:
       case AV_CODEC_ID_MSMPEG4V2:
       case AV_CODEC_ID_MSMPEG4V3:
-      case AV_CODEC_ID_MPEG1VIDEO:
-      case AV_CODEC_ID_MPEG2VIDEO:
         // Avoid h/w decoder for SD; Those files might use features
         // not supported and can easily be soft-decoded
         if (hint.width <= 800)
@@ -282,8 +280,6 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, const C
       case AV_CODEC_ID_MPEG4:
       case AV_CODEC_ID_MSMPEG4V2:
       case AV_CODEC_ID_MSMPEG4V3:
-      case AV_CODEC_ID_MPEG1VIDEO:
-      case AV_CODEC_ID_MPEG2VIDEO:
         // Avoid h/w decoder for SD; Those files might use features
         // not supported and can easily be soft-decoded
         if (hint.width <= 800)
@@ -335,10 +331,13 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, const C
   return NULL;
 }
 
-CDVDAudioCodec* CDVDFactoryCodec::CreateAudioCodec(CDVDStreamInfo &hint, bool allowpassthrough)
+CDVDAudioCodec* CDVDFactoryCodec::CreateAudioCodec(CDVDStreamInfo &hint, bool allowpassthrough, bool allowdtshddecode)
 {
   CDVDAudioCodec* pCodec = NULL;
   CDVDCodecOptions options;
+
+  if (!allowdtshddecode)
+    options.m_keys.push_back(CDVDCodecOption("allowdtshddecode", "0"));
 
   // we don't use passthrough if "sync playback to display" is enabled
   if (allowpassthrough)

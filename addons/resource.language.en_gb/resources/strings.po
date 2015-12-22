@@ -1383,6 +1383,7 @@ msgid "(0=auto)"
 msgstr ""
 
 #: xbmc/music/MusicDatabase.cpp
+#: xbmc/pvr/PVRManager.cpp
 msgctxt "#313"
 msgid "Cleaning database"
 msgstr ""
@@ -3599,11 +3600,7 @@ msgctxt "#841"
 msgid "Only this"
 msgstr ""
 
-#. Label of the option to switch between hierarchical and flat timer view (in confluence sideblade).
-#: skin.confluence
-msgctxt "#842"
-msgid "Group timers"
-msgstr ""
+#empty string with id 842
 
 #. Label for a context menu entry to activate a currently inactive timer
 #: xbmc/pvr/windows/GUIWindowPVRTimers.cpp
@@ -7783,7 +7780,7 @@ msgstr ""
 
 #: addons/skin.confluence/720p/DialogAudioDSPManager.xml
 msgctxt "#15114"
-msgid "Here you can configure a input resampling process. Notice: Only one active mode is allowed!"
+msgid "Here you can configure an input resampling process. Notice: Only one active mode is allowed!"
 msgstr ""
 
 #: addons/skin.confluence/720p/DialogAudioDSPManager.xml
@@ -8570,8 +8567,11 @@ msgctxt "#19039"
 msgid "Are you sure you want to hide this channel?"
 msgstr ""
 
+#: addons/skin.confluence/720p/IncludesHomeMenuItems.xml
+#: addons/skin.confluence/720p/IncludesPVR.xml
+#: addons/skin.confluence/720p/MyPVRTimers.xml
 msgctxt "#19040"
-msgid "Timer"
+msgid "Timers"
 msgstr ""
 
 msgctxt "#19041"
@@ -8757,7 +8757,11 @@ msgctxt "#19076"
 msgid "Folder"
 msgstr ""
 
-#empty string with id 19077
+#. Label of the option to hide disabled timers (in confluence sideblade) in timer window.
+#: skin.confluence
+msgctxt "#19077"
+msgid "Hide disabled"
+msgstr ""
 
 #. Label of channel selector list in PVR timer settings dialog
 #: xbmc/pvr/dialogs/GUIDialogPVRTimerSettings.cpp
@@ -9038,7 +9042,11 @@ msgctxt "#19137"
 msgid "No groups defined. Please create a group first"
 msgstr ""
 
-#empty string with id 19138
+#. Label of timer rules tv/radio home submenu item
+#: skin.confluence
+msgctxt "#19138"
+msgid "Timer rules"
+msgstr ""
 
 msgctxt "#19139"
 msgid "Name of the new group"
@@ -14086,7 +14094,7 @@ msgstr ""
 #. Header string on RDS Radiotext+ Info dialog
 #: addons/skin.confluence/720p/DialogPVRRadioRDSInfo.xml
 msgctxt "#29900"
-msgid "RadiotextPlus info"
+msgid "Radiotext Plus info"
 msgstr ""
 
 #. Music band name which make the song (if present)
@@ -14564,7 +14572,7 @@ msgstr ""
 #. Help text of boolean on/off value
 #: system/settings/settings.xml
 msgctxt "#29987"
-msgid "Send present traffic messages around and can be handled from addons (nothing inside KODI)"
+msgid "Send present traffic messages around and can be handled from add-ons (nothing inside Kodi)"
 msgstr ""
 
 #empty strings from id 29988 to 33000
@@ -16995,7 +17003,7 @@ msgstr ""
 #. Description of setting "System -> Audio output -> DTS capable receiver" with label #254
 #: system/settings/settings.xml
 msgctxt "#36366"
-msgid "Select this option if your receiver is capable of decoding DTS streams. Note: Enabling this will disable \"Support 8 channel DTS-HD audio decoding\" option"
+msgid "Select this option if your receiver is capable of decoding DTS streams.
 msgstr ""
 
 #: system/settings/darwin_osx.xml
@@ -17018,7 +17026,7 @@ msgstr ""
 #. Description of setting "System -> Audio output -> DTS-HD capable receiver" with label #347
 #: system/settings/settings.xml
 msgctxt "#36370"
-msgid "Select this option if your receiver is capable of decoding DTS-HD streams. Note: Enabling this will disable \"Support 8 channel DTS-HD audio decoding\" option"
+msgid "Select this option if your receiver is capable of decoding DTS-HD streams."
 msgstr ""
 
 #. Description of setting "System -> Audio output -> Audio output device" with label #545
@@ -18121,18 +18129,6 @@ msgstr ""
 #: xbmc/video/GUIViewStateVideo.xml
 msgctxt "#38018"
 msgid "My rating"
-msgstr ""
-
-#. Setting #38019 "Settings -> System -> Audio output -> Support 8 channel DTS-HD audio decoding"
-#: system/settings/settings.xml
-msgctxt "#38019"
-msgid "Support 8 channel DTS-HD audio decoding"
-msgstr ""
-
-#. Description of setting #38019 Settings -> System -> Audio output -> Support 8 channel DTS-HD audio decoding
-#: system/settings/settings.xml
-msgctxt "#38020"
-msgid "Enables decoding of high quality DTS-HD audio streams. Note: This increases CPU load and is only available when DTS and DTS-HD audio passthrough are disabled."
 msgstr ""
 
 #empty string with id 38021
